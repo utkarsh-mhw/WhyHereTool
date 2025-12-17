@@ -13,6 +13,7 @@ from src.threshold_clustering import *
 from src.dbscan_clustering import *
 from src.visualization import *
 from src.budget_filter import *
+from src.recommendations import *
 
 # ====================================================================
 # Configuration
@@ -255,6 +256,65 @@ def analyze():
     except Exception as e:
         return jsonify({'success': False, 'message': f'An unexpected error occurred: {str(e)}'}), 500
 
+@app.route('/data/recommendations', methods=['POST'])
+def get_recommendations():
+
+    try:
+
+        data = request.get_json(force=True) or {}
+        user_weights = data.get("user_weights", {})
+        
+        # Find similar user using KNN
+        recommended_hexagons, similarity = generate_recommendations(user_weights)
+
+        return jsonify({
+            'success': True,
+            'cached': True,
+            'similarity': float(similarity),
+            'recommended_hexagons': recommended_hexagons,
+            'message': f'Found users with {similarity:.1%} similar preferences'
+        }), 200
+            
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }), 500
+    
+@app.route('/data/save-user-profile', methods=['POST'])
+def save_user_profile():
+
+    try:
+        data = request.get_json()
+        user_weights = data.get("user_weights", {
+            'police_station': 6,
+            'grocery_store': 1,
+            'hospital': 5,
+            'marta_stop': 2,
+            'school': 0,
+            'restaurant': 3,
+            'park': 4
+        })
+
+        liked_hexagons = data.get('liked_hexagons', [])
+        
+
+        if len(liked_hexagons) > 5:
+            liked_hexagons = liked_hexagons[:5]
+ 
+        
+        save_user_profile(user_weights, liked_hexagons)
+        
+        # Reload global cache so KNN uses updated data
+        # global df_user_profiles
+        # df_user_profiles = df_profiles
+        
+        return jsonify({'success': True, 'message': 'Profile saved'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 # ====================================================================
 # Startup
