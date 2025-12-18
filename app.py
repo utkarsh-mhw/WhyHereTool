@@ -258,14 +258,18 @@ def analyze():
 
 @app.route('/data/recommendations', methods=['POST'])
 def get_recommendations():
+    
 
     try:
-
+        print("here 1")
         data = request.get_json(force=True) or {}
+        
         user_weights = data.get("user_weights", {})
+        print(user_weights)
         
         # Find similar user using KNN
         recommended_hexagons, similarity = generate_recommendations(user_weights)
+        print("here2")
 
         return jsonify({
             'success': True,
@@ -283,8 +287,8 @@ def get_recommendations():
             'message': f'Error: {str(e)}'
         }), 500
     
-@app.route('/data/save-user-profile', methods=['POST'])
-def save_user_profile():
+@app.route('/data/save_profile', methods=['POST'])
+def save_profile_for_user():
 
     try:
         data = request.get_json()
@@ -322,4 +326,6 @@ def save_user_profile():
 
 if __name__ == '__main__':
     # When deploying, set debug=False
-    app.run(debug=True)
+    if __name__ == '__main__':
+        app.run(debug=True, port=5001)
+    # app.run(debug=True)
